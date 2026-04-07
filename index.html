@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор відкатів</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: #0d0d1a;
+    font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+    color: #e0e0ec;
+    display: flex;
+    justify-content: center;
+    padding: 20px 12px;
+  }
+
+  .container { width: 100%; max-width: 520px; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 32px; }
+  .header-tag {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #4a6; margin-bottom: 8px; font-weight: 600;
+  }
+  .header h1 {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #c0c0d0, #80809a);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p { font-size: 13px; color: #5a5a6e; margin-top: 8px; line-height: 1.5; }
+
+  /* Mode Toggle */
+  .mode-toggle {
+    display: flex; gap: 2px; background: rgba(255,255,255,0.04);
+    border-radius: 10px; padding: 3px; margin-bottom: 20px;
+  }
+  .mode-btn {
+    flex: 1; padding: 10px 0; border: none; border-radius: 8px;
+    background: transparent; color: #6a6a7e; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+    font-family: inherit;
+  }
+  .mode-btn.active {
+    background: rgba(74,170,102,0.15); color: #4a6;
+  }
+
+  /* Card */
+  .card {
+    background: rgba(255,255,255,0.03); border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06); padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  /* Labels */
+  .label {
+    display: block; font-size: 12px; color: #7a7a8e; margin-bottom: 6px;
+    font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase;
+  }
+
+  /* Inputs */
+  .input {
+    width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+    color: #e0e0ec; font-size: 15px; outline: none;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    transition: border-color 0.2s;
+  }
+  .input:focus { border-color: rgba(74,170,102,0.4); }
+  .input-big { font-size: 18px; font-weight: 600; }
+
+  /* Preset buttons */
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .preset-btn {
+    padding: 8px 14px; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px; background: rgba(255,255,255,0.02);
+    color: #8a8a9a; font-size: 12px; cursor: pointer;
+    font-weight: 500; transition: all 0.2s; font-family: inherit;
+  }
+  .preset-btn.active {
+    border-color: rgba(74,170,102,0.4);
+    background: rgba(74,170,102,0.1); color: #6fc;
+  }
+
+  /* Checkbox */
+  .checkbox-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .checkbox-label {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 13px; color: #8a8a9a;
+  }
+  .checkbox-label input { accent-color: #4a6; }
+
+  /* Custom fields */
+  .custom-row { margin-top: 16px; display: flex; gap: 12px; }
+  .row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .flex2 { flex: 2; }
+  .flex1 { flex: 1; }
+  .separator { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 16px; }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .small-field { max-width: 180px; }
+  .medium-field { max-width: 240px; }
+
+  /* Results */
+  .results {
+    border: 1px solid rgba(74,170,102,0.15);
+    background: rgba(74,170,102,0.03);
+  }
+  .results-tag {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: #5a8a6a; margin-bottom: 16px; font-weight: 600;
+  }
+  .main-result {
+    text-align: center; padding: 20px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 16px;
+  }
+  .main-result-label { font-size: 12px; color: #6a8a7a; margin-bottom: 6px; }
+  .main-result-value {
+    font-size: 32px; font-weight: 700;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: #6fc;
+  }
+  .main-result-sub { font-size: 13px; color: #6a7a6e; margin-top: 4px; }
+
+  /* Breakdown rows */
+  .breakdown { display: flex; flex-direction: column; gap: 10px; }
+  .brow {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0;
+  }
+  .brow.highlight, .brow.profit {
+    padding: 10px 12px; border-radius: 8px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .brow.highlight { background: rgba(74,170,102,0.08); }
+  .brow.profit { background: rgba(100,140,255,0.06); }
+
+  .brow-label { font-size: 13px; color: #8a8a9a; }
+  .brow-label.highlight { color: #6fc; font-weight: 600; }
+  .brow-label.profit { color: #8ab4ff; font-weight: 600; }
+  .brow-label.neg { color: #c77; }
+  .brow-label.dim { color: #5a5a6e; }
+
+  .brow-value {
+    font-size: 14px; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-weight: 500; color: #b0b0c0;
+  }
+  .brow-value.highlight { font-size: 16px; font-weight: 700; color: #6fc; }
+  .brow-value.profit { font-size: 16px; font-weight: 700; color: #8ab4ff; }
+  .brow-value.profit.negative { color: #f66; }
+  .brow-value.neg { color: #c77; }
+  .brow-value.dim { color: #5a5a6e; }
+
+  .effective-rate {
+    margin-top: 16px; padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: #5a6a5e;
+  }
+  .effective-rate span:last-child { font-family: 'JetBrains Mono', monospace; }
+
+  /* Disclaimer */
+  .disclaimer {
+    margin-top: 24px; padding: 16px; border-radius: 10px;
+    background: rgba(255,200,50,0.04); border: 1px solid rgba(255,200,50,0.08);
+    font-size: 11px; color: #8a7a5a; line-height: 1.6; text-align: center;
+  }
+  .footer {
+    text-align: center; margin-top: 16px; font-size: 10px;
+    color: #3a3a4a; letter-spacing: 0.1em;
+  }
+
+  /* Info tip */
+  .info-tip {
+    position: relative; display: inline-block; margin-left: 6px; cursor: pointer;
+  }
+  .info-dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    font-size: 11px; color: #8a8a9a; font-weight: 700; line-height: 1;
+  }
+  .info-popup {
+    display: none; position: absolute; bottom: 26px; left: 50%;
+    transform: translateX(-50%); background: #1a1a2e;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+    padding: 10px 14px; font-size: 12px; color: #b0b0c0;
+    width: 240px; z-index: 99; line-height: 1.5;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    text-transform: none; letter-spacing: normal; font-weight: 400;
+  }
+  .info-tip.open .info-popup { display: block; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-tag">🧮 Фінансовий інструмент</div>
+    <h1>Калькулятор відкатів</h1>
+    <p>Розрахунок ціни з урахуванням податків, ПДВ та зборів</p>
+  </div>
+
+  <!-- Mode -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="forward" onclick="setMode('forward')">Відкат → Ціна</button>
+    <button class="mode-btn" data-mode="reverse" onclick="setMode('reverse')">Ціна → Відкат</button>
+  </div>
+
+  <!-- Tax preset -->
+  <div class="card">
+    <label class="label">
+      Система оподаткування
+      <span class="info-tip" onclick="toggleTip(this)">
+        <span class="info-dot">?</span>
+        <span class="info-popup">Оберіть як оподатковується отримувач коштів. Це впливає на розрахунок чистої суми відкату.</span>
+      </span>
+    </label>
+    <div class="presets">
+      <button class="preset-btn active" data-preset="fop3_5" onclick="setPreset('fop3_5')">ФОП 3 група (5%)</button>
+      <button class="preset-btn" data-preset="fop3_3vat" onclick="setPreset('fop3_3vat')">ФОП 3 група (3%+ПДВ)</button>
+      <button class="preset-btn" data-preset="fop2" onclick="setPreset('fop2')">ФОП 2 група</button>
+      <button class="preset-btn" data-preset="tov_basic" onclick="setPreset('tov_basic')">ТОВ (18%+ПДВ)</button>
+      <button class="preset-btn" data-preset="tov_no_vat" onclick="setPreset('tov_no_vat')">ТОВ без ПДВ</button>
+      <button class="preset-btn" data-preset="custom" onclick="setPreset('custom')">Власні параметри</button>
+    </div>
+    <div id="custom-fields" class="custom-row hidden">
+      <div class="flex1">
+        <label class="label">Ставка податку %</label>
+        <input type="number" class="input" id="customTax" value="5" oninput="recalc()">
+      </div>
+      <div style="display:flex;align-items:end;gap:8px;padding-bottom:4px;">
+        <label class="checkbox-label">
+          <input type="checkbox" id="customVat" onchange="recalc()"> ПДВ 20%
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main input -->
+  <div class="card">
+    <div class="row">
+      <div class="flex2">
+        <label class="label" id="main-input-label">
+          Бажана сума відкату ₴
+          <span class="info-tip" onclick="toggleTip(this)">
+            <span class="info-dot">?</span>
+            <span class="info-popup" id="main-input-tip">Чиста сума яку потрібно отримати на руки після всіх податків</span>
+          </span>
+        </label>
+        <input type="number" class="input input-big" id="mainInput" placeholder="100 000" oninput="recalc()">
+      </div>
+      <div class="flex1">
+        <label class="label">
+          Відсоток %
+          <span class="info-tip" onclick="toggleTip(this)">
+            <span class="info-dot">?</span>
+            <span class="info-popup">Відсоток від суми контракту (без ПДВ), який йде на відкат</span>
+          </span>
+        </label>
+        <input type="number" class="input" id="kickPct" value="10" oninput="recalc()">
+      </div>
+    </div>
+
+    <div class="separator options">
+      <div class="checkbox-row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="milLevy" checked onchange="recalc()"> Військовий збір 5%
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="includeTransfer" onchange="toggleTransfer()"> Комісія переказу
+        </label>
+      </div>
+
+      <div id="transfer-field" class="small-field hidden">
+        <label class="label">Комісія переказу %</label>
+        <input type="number" class="input" id="transferPct" value="1" oninput="recalc()">
+      </div>
+
+      <div class="medium-field">
+        <label class="label">
+          Реальна собівартість ₴
+          <span class="info-tip" onclick="toggleTip(this)">
+            <span class="info-dot">?</span>
+            <span class="info-popup">Фактичні витрати на товар/послугу. Не впливає на розрахунок відкату, але показує чистий прибуток виконавця.</span>
+          </span>
+        </label>
+        <input type="number" class="input" id="realCost" placeholder="0" oninput="recalc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card results" id="results-card" style="display:none;"></div>
+
+  <div class="disclaimer">
+    ⚠️ Калькулятор має інформаційний характер. Фактичні суми можуть відрізнятись залежно від конкретної ситуації.
+    Ставки податків актуальні на 2025–2026 рр. Проконсультуйтесь з бухгалтером.
+  </div>
+  <div class="footer">v1.0 · для внутрішнього використання</div>
+</div>
+
+<script>
+const PRESETS = {
+  fop3_5:    { tax: 5,  vat: false, isTov: false },
+  fop3_3vat: { tax: 3,  vat: true,  isTov: false },
+  fop2:      { tax: 0,  vat: false, isTov: false, flat: 1600 },
+  tov_basic: { tax: 18, vat: true,  isTov: true },
+  tov_no_vat:{ tax: 18, vat: false, isTov: true },
+  custom:    { tax: 0,  vat: false, isTov: false },
+};
+
+let state = { mode: 'forward', preset: 'fop3_5' };
+
+function $(id) { return document.getElementById(id); }
+function formatMoney(n) {
+  if (isNaN(n) || !isFinite(n)) return '—';
+  return n.toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function toggleTip(el) {
+  document.querySelectorAll('.info-tip.open').forEach(t => { if (t !== el) t.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.info-tip')) document.querySelectorAll('.info-tip.open').forEach(t => t.classList.remove('open'));
+});
+
+function setMode(m) {
+  state.mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  const lbl = $('main-input-label');
+  const tip = $('main-input-tip');
+  if (m === 'forward') {
+    lbl.childNodes[0].textContent = 'Бажана сума відкату ₴ ';
+    tip.textContent = 'Чиста сума яку потрібно отримати на руки після всіх податків';
+    $('mainInput').placeholder = '100 000';
+  } else {
+    lbl.childNodes[0].textContent = 'Ціна контракту ₴ ';
+    tip.textContent = 'Загальна сума контракту (з ПДВ якщо є)';
+    $('mainInput').placeholder = '1 000 000';
+  }
+  $('mainInput').value = '';
+  recalc();
+}
+
+function setPreset(p) {
+  state.preset = p;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === p));
+  $('custom-fields').classList.toggle('hidden', p !== 'custom');
+  recalc();
+}
+
+function toggleTransfer() {
+  $('transfer-field').classList.toggle('hidden', !$('includeTransfer').checked);
+  recalc();
+}
+
+function getConfig() {
+  const p = PRESETS[state.preset];
+  if (state.preset === 'custom') {
+    return { tax: parseFloat($('customTax').value) || 0, vat: $('customVat').checked, isTov: false };
+  }
+  return { ...p };
+}
+
+function recalc() {
+  const mainVal = parseFloat($('mainInput').value);
+  if (!mainVal || mainVal <= 0) { $('results-card').style.display = 'none'; return; }
+
+  const config = getConfig();
+  const kickPct = (parseFloat($('kickPct').value) || 0) / 100;
+  if (kickPct <= 0) { $('results-card').style.display = 'none'; return; }
+
+  const milRate = $('milLevy').checked ? 0.05 : 0;
+  const transferRate = $('includeTransfer').checked ? (parseFloat($('transferPct').value) || 0) / 100 : 0;
+  const taxRate = config.tax / 100;
+  const rc = parseFloat($('realCost').value) || 0;
+  const transferPctDisplay = $('transferPct').value || '1';
+
+  let r;
+
+  if (state.mode === 'forward') {
+    const kick = mainVal;
+    if (config.isTov) {
+      const divTaxRate = 0.09 + milRate;
+      const effectiveRate = 1 - (1 - taxRate) * (1 - divTaxRate);
+      const denom = 1 - effectiveRate - transferRate;
+      if (denom <= 0) { $('results-card').style.display = 'none'; return; }
+      const gross = kick / denom;
+      const priceNoVat = gross / kickPct;
+      const priceVat = config.vat ? priceNoVat * 1.2 : priceNoVat;
+      const vatAmt = config.vat ? priceNoVat * 0.2 : 0;
+      const corpTax = gross * taxRate;
+      const divTax = (gross - corpTax) * divTaxRate;
+      r = {
+        contractPrice: priceVat, priceNoVat, kickNet: kick, kickGross: gross,
+        vatAmt, taxAmt: corpTax + divTax, milAmt: 0,
+        transferAmt: gross * transferRate, netProfit: priceNoVat - gross - corpTax - rc, rc,
+      };
+    } else {
+      const effectiveRate = taxRate + milRate;
+      const denom = 1 - effectiveRate - transferRate;
+      if (denom <= 0) { $('results-card').style.display = 'none'; return; }
+      const gross = kick / denom;
+      const priceNoVat = gross / kickPct;
+      const priceVat = config.vat ? priceNoVat * 1.2 : priceNoVat;
+      r = {
+        contractPrice: priceVat, priceNoVat, kickNet: kick, kickGross: gross,
+        vatAmt: config.vat ? priceNoVat * 0.2 : 0,
+        taxAmt: gross * taxRate, milAmt: gross * milRate,
+        transferAmt: gross * transferRate, netProfit: priceNoVat - gross - gross * taxRate - gross * milRate - rc, rc,
+      };
+    }
+  } else {
+    const price = mainVal;
+    const priceNoVat = config.vat ? price / 1.2 : price;
+    const vatAmt = config.vat ? priceNoVat * 0.2 : 0;
+    const gross = priceNoVat * kickPct;
+
+    if (config.isTov) {
+      const divTaxRate = 0.09 + milRate;
+      const effectiveRate = 1 - (1 - taxRate) * (1 - divTaxRate);
+      const taxAmt = gross * effectiveRate;
+      const transferAmt = gross * transferRate;
+      r = {
+        contractPrice: price, priceNoVat, kickNet: gross - taxAmt - transferAmt,
+        kickGross: gross, vatAmt, taxAmt, milAmt: 0, transferAmt,
+        netProfit: priceNoVat - gross - rc, rc,
+      };
+    } else {
+      const taxAmt = gross * taxRate;
+      const milAmt = gross * milRate;
+      const transferAmt = gross * transferRate;
+      r = {
+        contractPrice: price, priceNoVat, kickNet: gross - taxAmt - milAmt - transferAmt,
+        kickGross: gross, vatAmt, taxAmt, milAmt, transferAmt,
+        netProfit: priceNoVat - gross - rc, rc,
+      };
+    }
+  }
+
+  // Render
+  const card = $('results-card');
+  card.style.display = 'block';
+
+  const mainLabel = state.mode === 'forward' ? 'Ціна контракту (з ПДВ)' : 'Чистий відкат на руки';
+  const mainValue = state.mode === 'forward' ? r.contractPrice : r.kickNet;
+  const subLine = (state.mode === 'forward' && config.vat)
+    ? `<div class="main-result-sub">без ПДВ: ${formatMoney(r.priceNoVat)} ₴</div>` : '';
+
+  const rows = [
+    { label: 'Сума контракту', value: r.contractPrice, show: true },
+    { label: 'ПДВ (20%)', value: r.vatAmt, show: r.vatAmt > 0, cls: 'dim' },
+    { label: 'Сума без ПДВ', value: r.priceNoVat, show: config.vat },
+    { label: `Відкат брутто (${$('kickPct').value}%)`, value: r.kickGross, show: true },
+    { label: `Податок (${config.tax}%)`, value: r.taxAmt, show: r.taxAmt > 0, cls: 'neg', neg: true },
+    { label: `Військовий збір (${$('milLevy').checked ? '5' : '0'}%)`, value: r.milAmt, show: r.milAmt > 0, cls: 'neg', neg: true },
+    { label: `Комісія переказу (${transferPctDisplay}%)`, value: r.transferAmt, show: r.transferAmt > 0, cls: 'neg', neg: true },
+    { label: '💰 Відкат чистими', value: r.kickNet, show: true, type: 'highlight' },
+    { label: 'Собівартість', value: r.rc, show: r.rc > 0, cls: 'neg', neg: true },
+    { label: '📊 Прибуток виконавця', value: r.netProfit, show: true, type: 'profit' },
+  ].filter(x => x.show);
+
+  const effRate = r.kickGross > 0 ? ((r.kickNet / r.contractPrice) * 100).toFixed(2) : '0.00';
+
+  card.innerHTML = `
+    <div class="results-tag">Результат</div>
+    <div class="main-result">
+      <div class="main-result-label">${mainLabel}</div>
+      <div class="main-result-value">${formatMoney(mainValue)} ₴</div>
+      ${subLine}
+    </div>
+    <div class="breakdown">
+      ${rows.map(row => {
+        const rowType = row.type || '';
+        const rowCls = rowType ? ` ${rowType}` : '';
+        const lblCls = row.cls || rowType || '';
+        let valCls = row.cls || rowType || '';
+        if (rowType === 'profit' && row.value < 0) valCls += ' negative';
+        const prefix = row.neg ? '−' : '';
+        return `<div class="brow${rowCls}">
+          <span class="brow-label ${lblCls}">${row.label}</span>
+          <span class="brow-value ${valCls}">${prefix}${formatMoney(Math.abs(row.value))} ₴</span>
+        </div>`;
+      }).join('')}
+    </div>
+    ${r.kickGross > 0 ? `<div class="effective-rate">
+      <span>Ефективна ставка відкату від контракту</span>
+      <span>${effRate}%</span>
+    </div>` : ''}
+  `;
+}
+</script>
+</body>
+</html>
